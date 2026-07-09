@@ -1,0 +1,104 @@
+{
+  "id": "case_001_missing_engineer",
+  "title": "Case 001: The Missing Engineer",
+  "description": "Engineer Artem Volkov entered Sector C during a station-wide power anomaly. Official records say he never left.",
+  "status": "AVAILABLE",
+  "characters": [
+    {
+      "id": "artem_volkov",
+      "name": "Artem Volkov",
+      "role": "Station engineer",
+      "description": "Responsible for diagnostics of Sector C power systems.",
+      "knownFacts": [
+        "His badge was last recorded at the entrance to Sector C.",
+        "He requested a manual inspection of the maintenance airlock one day before the incident."
+      ]
+    },
+    {
+      "id": "daniil_orlov",
+      "name": "Daniil Orlov",
+      "role": "Systems technician",
+      "description": "Had access to power routing and door logging systems.",
+      "knownFacts": [
+        "Worked the morning maintenance shift.",
+        "His access record contains a two-minute gap during the incident."
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "central_corridor",
+      "name": "Central Corridor",
+      "description": "Main connection route between crew and technical sectors.",
+      "connectedRoomIds": ["sector_c"]
+    },
+    {
+      "id": "sector_c",
+      "name": "Sector C",
+      "description": "Restricted technical sector with unstable power telemetry.",
+      "connectedRoomIds": ["central_corridor", "maintenance_airlock"]
+    },
+    {
+      "id": "maintenance_airlock",
+      "name": "Maintenance Airlock",
+      "description": "Manual service airlock connected to Sector C.",
+      "connectedRoomIds": ["sector_c"]
+    }
+  ],
+  "events": [
+    {
+      "id": "event_0812_badge",
+      "time": "08:12",
+      "title": "Volkov badge accepted",
+      "description": "Door log reports Artem Volkov entering Sector C.",
+      "locationId": "sector_c",
+      "involvedCharacterIds": ["artem_volkov"],
+      "sourceEvidenceId": "evidence_door_log_sector_c",
+      "reliability": "CONFLICTING"
+    },
+    {
+      "id": "event_0814_power_spike",
+      "time": "08:14",
+      "title": "Power spike detected",
+      "description": "Power routing briefly overloads near the maintenance airlock.",
+      "locationId": "maintenance_airlock",
+      "involvedCharacterIds": [],
+      "sourceEvidenceId": "evidence_power_log",
+      "reliability": "PARTIAL"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "evidence_door_log_sector_c",
+      "title": "Sector C door log",
+      "content": "08:12 - Badge accepted: Artem Volkov. Entry recorded. No exit event found.",
+      "sourceType": "DOOR_LOG",
+      "relatedCharacterIds": ["artem_volkov"],
+      "relatedRoomIds": ["sector_c"],
+      "relatedEventIds": ["event_0812_badge"],
+      "reliability": "CONFLICTING"
+    },
+    {
+      "id": "evidence_power_log",
+      "title": "Power routing anomaly",
+      "content": "08:14 - Localized spike near maintenance airlock. Door logging service restarted at 08:16.",
+      "sourceType": "SYSTEM_LOG",
+      "relatedCharacterIds": [],
+      "relatedRoomIds": ["maintenance_airlock"],
+      "relatedEventIds": ["event_0814_power_spike"],
+      "reliability": "PARTIAL"
+    }
+  ],
+  "solution": {
+    "victimId": "artem_volkov",
+    "suspectId": "daniil_orlov",
+    "locationId": "maintenance_airlock",
+    "timeRange": "08:14-08:17",
+    "cause": "Covering up sabotage",
+    "method": "Manual airlock lockout and logging interruption",
+    "requiredEvidenceIds": [
+      "evidence_door_log_sector_c",
+      "evidence_power_log"
+    ]
+  }
+}
