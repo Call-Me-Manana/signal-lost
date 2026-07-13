@@ -10,6 +10,10 @@ class CaseProgressRepository(
         return dao.getProgress(caseId)
     }
 
+    suspend fun getAllProgress(): List<CaseProgressEntity> {
+        return dao.getAllProgress()
+    }
+
     suspend fun saveProgress(progress: CaseProgressEntity) {
         dao.saveProgress(progress)
     }

@@ -96,6 +96,14 @@ class InvestigationViewModel(
         }
     }
 
+    fun markEvidenceViewed(evidenceId: String) {
+        updateProgress { currentState ->
+            currentState.copy(
+                viewedEvidenceIds = currentState.viewedEvidenceIds + evidenceId
+            )
+        }
+    }
+
     fun checkHypothesis(investigationCase: InvestigationCase) {
         val hypothesis = PlayerHypothesis(
             caseId = investigationCase.id,
@@ -144,6 +152,7 @@ class InvestigationViewModel(
             cause = cause,
             method = method,
             selectedEvidenceIds = selectedEvidenceIds.toSet(),
+            viewedEvidenceIds = viewedEvidenceIds.toSet(),
             isSolved = isSolved
         )
     }
@@ -158,6 +167,7 @@ class InvestigationViewModel(
             cause = cause,
             method = method,
             selectedEvidenceIds = selectedEvidenceIds.toList(),
+            viewedEvidenceIds = viewedEvidenceIds.toList(),
             isSolved = isSolved
         )
     }

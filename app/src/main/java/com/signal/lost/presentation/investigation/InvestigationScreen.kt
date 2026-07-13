@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +48,7 @@ fun InvestigationScreen(
     val viewModel: InvestigationViewModel = viewModel(key = investigationCase.id)
     val uiState = viewModel.uiState
     var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedEvidenceId by remember { mutableStateOf<String?>(null) }
     val tabs = listOf("Evidence", "Timeline", "Crew", "Hypothesis")
 
     LaunchedEffect(investigationCase.id) {
@@ -79,7 +81,16 @@ fun InvestigationScreen(
         when (selectedTabIndex) {
             0 -> EvidenceList(
                 modifier = Modifier.weight(1f),
-                evidence = investigationCase.evidence
+                evidence = investigationCase.evidence,
+                selectedEvidenceId = selectedEvidenceId,
+                viewedEvidenceIds = uiState.viewedEvidenceIds,
+                onEvidenceSelected = { evidenceId ->
+                    selectedEvidenceId = evidenceId
+                    viewModel.markEvidenceViewed(evidenceId)
+                },
+                onCloseEvidence = {
+                    selectedEvidenceId = null
+                }
             )
 
             1 -> TimelineList(
@@ -151,34 +162,149 @@ private fun InvestigationHeader(
 @Composable
 private fun EvidenceList(
     modifier: Modifier = Modifier,
-    evidence: List<Evidence>
+    evidence: List<Evidence>,
+    selectedEvidenceId: String?,
+    viewedEvidenceIds: Set<String>,
+    onEvidenceSelected: (String) -> Unit,
+    onCloseEvidence: () -> Unit
 ) {
-    LazyColumn(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(evidence) { item ->
-            InvestigationCard {
+    val selectedEvidence = evidence.firstOrNull { item -> item.id == selectedEvidenceId }
+
+    if (selectedEvidence != null) {
+        EvidenceDetail(
+            modifier = modifier,
+            evidence = selectedEvidence,
+            isViewed = selectedEvidence.id in viewedEvidenceIds,
+            onClose = onCloseEvidence
+        )
+    } else {
+        LazyColumn(
+            modifier = modifier,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(evidence) { item ->
+                EvidenceListItem(
+                    evidence = item,
+                    isViewed = item.id in viewedEvidenceIds,
+                    onOpen = { onEvidenceSelected(item.id) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EvidenceListItem(
+    evidence: Evidence,
+    isViewed: Boolean,
+    onOpen: () -> Unit
+) {
+    InvestigationCard {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(
-                    text = item.sourceType.name,
+                    text = evidence.sourceType.name,
                     color = Color(0xFF8BE9FD),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.labelMedium
                 )
                 Text(
-                    text = item.title,
+                    text = evidence.title,
                     color = Color(0xFFE6F7FF),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = item.content,
-                    color = Color(0xFFA7B6BE),
-                    style = MaterialTheme.typography.bodyMedium
+                    text = "Reliability: ${evidence.reliability.name}",
+                    color = Color(0xFFB8D8E0),
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = "Reliability: ${item.reliability.name}",
+                    text = if (isViewed) "Status: VIEWED" else "Status: NEW",
+                    color = if (isViewed) Color(0xFFB8D8E0) else Color(0xFFFFD166),
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Button(
+                modifier = Modifier.padding(start = 12.dp),
+                onClick = onOpen
+            ) {
+                Text(text = "Open")
+            }
+        }
+    }
+}
+
+@Composable
+private fun EvidenceDetail(
+    modifier: Modifier = Modifier,
+    evidence: Evidence,
+    isViewed: Boolean,
+    onClose: () -> Unit
+) {
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            InvestigationCard {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = evidence.sourceType.name,
+                            color = Color(0xFF8BE9FD),
+                            fontFamily = FontFamily.Monospace,
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                        Text(
+                            text = evidence.title,
+                            color = Color(0xFFE6F7FF),
+                            fontWeight = FontWeight.Bold,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    }
+                    Button(
+                        modifier = Modifier.padding(start = 12.dp),
+                        onClick = onClose
+                    ) {
+                        Text(text = "Close")
+                    }
+                }
+            }
+        }
+
+        item {
+            InvestigationCard {
+                Text(
+                    text = evidence.content,
+                    color = Color(0xFFA7B6BE),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Text(
+                    text = "Reliability: ${evidence.reliability.name}",
                     color = Color(0xFFB8D8E0),
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    text = if (isViewed) "Status: VIEWED" else "Status: NEW",
+                    color = if (isViewed) Color(0xFFB8D8E0) else Color(0xFFFFD166),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall
                 )

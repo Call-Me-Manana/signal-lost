@@ -13,5 +13,6 @@ data class CaseProgressEntity(
     val cause: String?,
     val method: String?,
     val selectedEvidenceIds: List<String>,
+    val viewedEvidenceIds: List<String>,
     val isSolved: Boolean
 )

@@ -17,6 +17,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,8 +33,13 @@ import com.signal.lost.presentation.theme.SignalLostTheme
 fun CaseArchiveScreen(
     uiState: CaseArchiveUiState,
     onBack: () -> Unit,
-    onOpenCase: (InvestigationCase) -> Unit
+    onOpenCase: (InvestigationCase) -> Unit,
+    onRefreshProgress: () -> Unit
 ) {
+    LaunchedEffect(Unit) {
+        onRefreshProgress()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -81,6 +87,7 @@ fun CaseArchiveScreen(
                 uiState.cases.forEach { investigationCase ->
                     CaseArchiveItem(
                         investigationCase = investigationCase,
+                        progressSummary = uiState.progressByCaseId[investigationCase.id],
                         onOpenCase = onOpenCase
                     )
                 }
@@ -92,6 +99,7 @@ fun CaseArchiveScreen(
 @Composable
 private fun CaseArchiveItem(
     investigationCase: InvestigationCase,
+    progressSummary: CaseProgressSummary?,
     onOpenCase: (InvestigationCase) -> Unit
 ) {
     Card(
@@ -117,7 +125,15 @@ private fun CaseArchiveItem(
                 )
                 AssistChip(
                     onClick = {},
-                    label = { Text(text = investigationCase.status.label) }
+                    label = {
+                        Text(
+                            text = if (progressSummary?.isSolved == true) {
+                                CaseStatus.SOLVED.label
+                            } else {
+                                investigationCase.status.label
+                            }
+                        )
+                    }
                 )
             }
             Text(
@@ -132,14 +148,38 @@ private fun CaseArchiveItem(
                 fontFamily = FontFamily.Monospace,
                 style = MaterialTheme.typography.bodySmall
             )
+            Text(
+                text = progressSummary.toProgressLabel(totalEvidence = investigationCase.evidence.size),
+                color = Color(0xFFB8D8E0),
+                fontFamily = FontFamily.Monospace,
+                style = MaterialTheme.typography.bodySmall
+            )
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { onOpenCase(investigationCase) }
             ) {
-                Text(text = "Begin recovery")
+                Text(
+                    text = if (progressSummary?.hasHypothesis == true) {
+                        "Continue recovery"
+                    } else {
+                        "Begin recovery"
+                    }
+                )
             }
         }
     }
+}
+
+private fun CaseProgressSummary?.toProgressLabel(totalEvidence: Int): String {
+    if (this == null) return "Progress: 0/$totalEvidence viewed / no hypothesis"
+
+    val hypothesisStatus = if (hasHypothesis) {
+        "$selectedEvidenceCount evidence selected"
+    } else {
+        "no hypothesis"
+    }
+
+    return "Progress: $viewedEvidenceCount/$totalEvidence viewed / $hypothesisStatus"
 }
 
 private val CaseStatus.label: String
@@ -159,7 +199,8 @@ private fun CaseArchiveScreenPreview() {
                 cases = emptyList()
             ),
             onBack = {},
-            onOpenCase = {}
+            onOpenCase = {},
+            onRefreshProgress = {}
         )
     }
 }

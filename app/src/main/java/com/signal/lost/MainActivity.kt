@@ -57,7 +57,8 @@ private fun SignalLostApp() {
                 onOpenCase = { investigationCase ->
                     selectedCase = investigationCase
                     currentScreen = SignalLostScreen.Investigation
-                }
+                },
+                onRefreshProgress = viewModel::refreshProgress
             )
         }
 

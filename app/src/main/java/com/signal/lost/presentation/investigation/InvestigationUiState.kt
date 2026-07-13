@@ -10,6 +10,7 @@ data class InvestigationUiState(
     val cause: String? = null,
     val method: String? = null,
     val selectedEvidenceIds: Set<String> = emptySet(),
+    val viewedEvidenceIds: Set<String> = emptySet(),
     val isSolved: Boolean = false,
     val checkResult: HypothesisCheckResult? = null
 )
