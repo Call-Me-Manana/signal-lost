@@ -35,7 +35,7 @@ fun MainScreen(
         horizontalAlignment = Alignment.Start
     ) {
         Text(
-            text = "SIGNAL LOST",
+            text = "СИГНАЛ ПОТЕРЯН",
             color = Color(0xFFE6F7FF),
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
@@ -43,14 +43,14 @@ fun MainScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
-            text = "MEMORY RECOVERY INTERFACE ONLINE",
+            text = "ИНТЕРФЕЙС ВОССТАНОВЛЕНИЯ ПАМЯТИ АКТИВЕН",
             color = Color(0xFF8BE9FD),
             fontFamily = FontFamily.Monospace,
             fontSize = 14.sp
         )
         Spacer(modifier = Modifier.height(32.dp))
         Text(
-            text = "Case archive contains corrupted station records, damaged sensor logs, and unresolved crew events.",
+            text = "Архив дел содержит поврежденные записи станции, фрагменты сенсорных журналов и неразрешенные события экипажа.",
             color = Color(0xFFA7B6BE),
             style = MaterialTheme.typography.bodyLarge
         )
@@ -59,7 +59,7 @@ fun MainScreen(
             modifier = Modifier.fillMaxWidth(),
             onClick = onOpenCaseArchive
         ) {
-            Text(text = "Open Case Archive")
+            Text(text = "Открыть архив дел")
         }
     }
 }

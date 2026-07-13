@@ -49,7 +49,7 @@ class CaseArchiveViewModel(
             }.onFailure { error ->
                 uiState = CaseArchiveUiState(
                     isLoading = false,
-                    errorMessage = error.message ?: "Case archive is unavailable."
+                    errorMessage = error.message ?: "Архив дел недоступен."
                 )
             }
         }

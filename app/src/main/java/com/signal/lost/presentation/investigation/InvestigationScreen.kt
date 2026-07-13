@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.signal.lost.domain.model.Character
 import com.signal.lost.domain.model.Evidence
+import com.signal.lost.domain.model.EvidenceReliability
+import com.signal.lost.domain.model.EvidenceSourceType
 import com.signal.lost.domain.model.InvestigationCase
 import com.signal.lost.domain.model.Room
 import com.signal.lost.domain.model.TimelineEvent
@@ -49,7 +51,7 @@ fun InvestigationScreen(
     val uiState = viewModel.uiState
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var selectedEvidenceId by remember { mutableStateOf<String?>(null) }
-    val tabs = listOf("Evidence", "Timeline", "Crew", "Hypothesis")
+    val tabs = listOf("Улики", "Таймлайн", "Экипаж", "Гипотеза")
 
     LaunchedEffect(investigationCase.id) {
         viewModel.loadProgress(investigationCase.id)
@@ -154,7 +156,7 @@ private fun InvestigationHeader(
             modifier = Modifier.padding(start = 12.dp),
             onClick = onBack
         ) {
-            Text(text = "Back")
+            Text(text = "Назад")
         }
     }
 }
@@ -210,7 +212,7 @@ private fun EvidenceListItem(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = evidence.sourceType.name,
+                    text = evidence.sourceType.label,
                     color = Color(0xFF8BE9FD),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.labelMedium
@@ -222,13 +224,13 @@ private fun EvidenceListItem(
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "Reliability: ${evidence.reliability.name}",
+                    text = "Надежность: ${evidence.reliability.label}",
                     color = Color(0xFFB8D8E0),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = if (isViewed) "Status: VIEWED" else "Status: NEW",
+                    text = if (isViewed) "Статус: ПРОСМОТРЕНО" else "Статус: НОВОЕ",
                     color = if (isViewed) Color(0xFFB8D8E0) else Color(0xFFFFD166),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall
@@ -238,7 +240,7 @@ private fun EvidenceListItem(
                 modifier = Modifier.padding(start = 12.dp),
                 onClick = onOpen
             ) {
-                Text(text = "Open")
+                Text(text = "Открыть")
             }
         }
     }
@@ -267,7 +269,7 @@ private fun EvidenceDetail(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
-                            text = evidence.sourceType.name,
+                            text = evidence.sourceType.label,
                             color = Color(0xFF8BE9FD),
                             fontFamily = FontFamily.Monospace,
                             style = MaterialTheme.typography.labelMedium
@@ -283,7 +285,7 @@ private fun EvidenceDetail(
                         modifier = Modifier.padding(start = 12.dp),
                         onClick = onClose
                     ) {
-                        Text(text = "Close")
+                        Text(text = "Закрыть")
                     }
                 }
             }
@@ -297,13 +299,13 @@ private fun EvidenceDetail(
                     style = MaterialTheme.typography.bodyLarge
                 )
                 Text(
-                    text = "Reliability: ${evidence.reliability.name}",
+                    text = "Надежность: ${evidence.reliability.label}",
                     color = Color(0xFFB8D8E0),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
-                    text = if (isViewed) "Status: VIEWED" else "Status: NEW",
+                    text = if (isViewed) "Статус: ПРОСМОТРЕНО" else "Статус: НОВОЕ",
                     color = if (isViewed) Color(0xFFB8D8E0) else Color(0xFFFFD166),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall
@@ -343,7 +345,7 @@ private fun TimelineList(
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
-                    text = "Reliability: ${event.reliability.name}",
+                    text = "Надежность: ${event.reliability.label}",
                     color = Color(0xFFB8D8E0),
                     fontFamily = FontFamily.Monospace,
                     style = MaterialTheme.typography.bodySmall
@@ -409,14 +411,14 @@ private fun HypothesisPanel(
 ) {
     val timeOptions = listOf("08:12-08:14", "08:14-08:17", "08:18-08:21")
     val causeOptions = listOf(
-        "Accidental power failure",
-        "Covering up sabotage",
-        "Sensor malfunction"
+        "Случайный отказ питания",
+        "Сокрытие саботажа",
+        "Ошибка датчика"
     )
     val methodOptions = listOf(
-        "Manual airlock lockout and logging interruption",
-        "Remote poisoning through life support",
-        "Forged badge access only"
+        "Ручная блокировка шлюза и прерывание журналирования",
+        "Удаленное отравление через жизнеобеспечение",
+        "Только подделка доступа по пропуску"
     )
 
     LazyColumn(
@@ -426,20 +428,20 @@ private fun HypothesisPanel(
         item {
             InvestigationCard {
                 Text(
-                    text = "FINAL HYPOTHESIS",
+                    text = "ФИНАЛЬНАЯ ГИПОТЕЗА",
                     color = Color(0xFF8BE9FD),
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
                 Text(
-                    text = "Select the full chain of events and attach the evidence that supports it.",
+                    text = "Выберите полную цепочку событий и приложите улики, которые ее подтверждают.",
                     color = Color(0xFFA7B6BE),
                     style = MaterialTheme.typography.bodyMedium
                 )
                 if (uiState.isSolved) {
                     Text(
-                        text = "Saved status: CASE CLOSED",
+                        text = "Сохраненный статус: ДЕЛО ЗАКРЫТО",
                         color = Color(0xFF8BE9FD),
                         fontFamily = FontFamily.Monospace,
                         style = MaterialTheme.typography.bodySmall
@@ -450,7 +452,7 @@ private fun HypothesisPanel(
 
         item {
             CharacterChoiceSection(
-                title = "Victim",
+                title = "Жертва",
                 characters = investigationCase.characters,
                 selectedCharacterId = uiState.victimId,
                 onSelected = onVictimSelected
@@ -459,7 +461,7 @@ private fun HypothesisPanel(
 
         item {
             CharacterChoiceSection(
-                title = "Suspect",
+                title = "Причастный",
                 characters = investigationCase.characters,
                 selectedCharacterId = uiState.suspectId,
                 onSelected = onSuspectSelected
@@ -468,7 +470,7 @@ private fun HypothesisPanel(
 
         item {
             RoomChoiceSection(
-                title = "Location",
+                title = "Место",
                 rooms = investigationCase.rooms,
                 selectedRoomId = uiState.locationId,
                 onSelected = onLocationSelected
@@ -477,7 +479,7 @@ private fun HypothesisPanel(
 
         item {
             TextChoiceSection(
-                title = "Time range",
+                title = "Время",
                 options = timeOptions,
                 selectedOption = uiState.timeRange,
                 onSelected = onTimeRangeSelected
@@ -486,7 +488,7 @@ private fun HypothesisPanel(
 
         item {
             TextChoiceSection(
-                title = "Cause",
+                title = "Причина",
                 options = causeOptions,
                 selectedOption = uiState.cause,
                 onSelected = onCauseSelected
@@ -495,7 +497,7 @@ private fun HypothesisPanel(
 
         item {
             TextChoiceSection(
-                title = "Method",
+                title = "Способ",
                 options = methodOptions,
                 selectedOption = uiState.method,
                 onSelected = onMethodSelected
@@ -515,13 +517,16 @@ private fun HypothesisPanel(
                 modifier = Modifier.fillMaxWidth(),
                 onClick = onCheckHypothesis
             ) {
-                Text(text = "Check hypothesis")
+                Text(text = "Проверить гипотезу")
             }
         }
 
         uiState.checkResult?.let { result ->
             item {
-                HypothesisResultCard(result = result)
+                HypothesisResultCard(
+                    result = result,
+                    evidence = investigationCase.evidence
+                )
             }
         }
     }
@@ -604,7 +609,7 @@ private fun EvidenceChoiceSection(
 ) {
     InvestigationCard {
         Text(
-            text = "Evidence",
+            text = "Улики",
             color = Color(0xFFE6F7FF),
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium
@@ -627,7 +632,7 @@ private fun EvidenceChoiceSection(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = item.sourceType.name,
+                        text = item.sourceType.label,
                         color = Color(0xFF8BE9FD),
                         fontFamily = FontFamily.Monospace,
                         style = MaterialTheme.typography.bodySmall
@@ -638,16 +643,40 @@ private fun EvidenceChoiceSection(
     }
 }
 
+private val EvidenceSourceType.label: String
+    get() = when (this) {
+        EvidenceSourceType.DOOR_LOG -> "Журнал дверей"
+        EvidenceSourceType.SYSTEM_LOG -> "Системный журнал"
+        EvidenceSourceType.AUDIO_TRANSCRIPT -> "Расшифровка аудио"
+        EvidenceSourceType.CAMERA_RECORDING -> "Запись камеры"
+        EvidenceSourceType.SENSOR_DATA -> "Данные датчиков"
+        EvidenceSourceType.MEDICAL_REPORT -> "Медицинский отчет"
+        EvidenceSourceType.ACCESS_LOG -> "Журнал доступа"
+        EvidenceSourceType.AI_MEMORY_FRAGMENT -> "Фрагмент памяти ИИ"
+    }
+
+private val EvidenceReliability.label: String
+    get() = when (this) {
+        EvidenceReliability.CONFIRMED -> "подтверждено"
+        EvidenceReliability.PARTIAL -> "частично"
+        EvidenceReliability.CONFLICTING -> "противоречиво"
+        EvidenceReliability.CORRUPTED -> "повреждено"
+        EvidenceReliability.UNKNOWN -> "неизвестно"
+    }
+
 @Composable
 private fun HypothesisResultCard(
-    result: HypothesisCheckResult
+    result: HypothesisCheckResult,
+    evidence: List<Evidence>
 ) {
+    val evidenceTitleById = evidence.associate { item -> item.id to item.title }
+
     InvestigationCard {
         Text(
             text = if (result.isSolved) {
-                "CASE CLOSED"
+                "ДЕЛО ЗАКРЫТО"
             } else {
-                "HYPOTHESIS INCOMPLETE"
+                "ГИПОТЕЗА НЕПОЛНАЯ"
             },
             color = if (result.isSolved) Color(0xFF8BE9FD) else Color(0xFFFFD166),
             fontFamily = FontFamily.Monospace,
@@ -656,15 +685,19 @@ private fun HypothesisResultCard(
         )
         result.checks.forEach { item ->
             Text(
-                text = "${if (item.isCorrect) "[OK]" else "[--]"} ${item.title}",
+                text = "${if (item.isCorrect) "[ВЕРНО]" else "[--]"} ${item.title}",
                 color = if (item.isCorrect) Color(0xFFB8D8E0) else Color(0xFFFFD166),
                 fontFamily = FontFamily.Monospace,
                 style = MaterialTheme.typography.bodyMedium
             )
         }
         if (result.missingEvidenceIds.isNotEmpty()) {
+            val missingEvidenceTitles = result.missingEvidenceIds
+                .map { evidenceId -> evidenceTitleById[evidenceId] ?: evidenceId }
+                .joinToString()
+
             Text(
-                text = "Missing required evidence: ${result.missingEvidenceIds.joinToString()}",
+                text = "Не хватает обязательных улик: $missingEvidenceTitles",
                 color = Color(0xFFFFB4AB),
                 style = MaterialTheme.typography.bodySmall
             )

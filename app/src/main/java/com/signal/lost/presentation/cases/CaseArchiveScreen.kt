@@ -54,20 +54,20 @@ fun CaseArchiveScreen(
         ) {
             Column {
                 Text(
-                    text = "CASE ARCHIVE",
+                    text = "АРХИВ ДЕЛ",
                     color = Color(0xFFE6F7FF),
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.headlineSmall
                 )
                 Text(
-                    text = "Recovered investigation packets",
+                    text = "Восстановленные пакеты расследований",
                     color = Color(0xFF8EA4AD),
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
             Button(onClick = onBack) {
-                Text(text = "Back")
+                Text(text = "Назад")
             }
         }
 
@@ -143,7 +143,7 @@ private fun CaseArchiveItem(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${investigationCase.characters.size} profiles / ${investigationCase.evidence.size} evidence files / ${investigationCase.events.size} timeline events",
+                text = "${investigationCase.characters.size} профиля / ${investigationCase.evidence.size} файлов улик / ${investigationCase.events.size} событий",
                 color = Color(0xFF8BE9FD),
                 fontFamily = FontFamily.Monospace,
                 style = MaterialTheme.typography.bodySmall
@@ -160,9 +160,9 @@ private fun CaseArchiveItem(
             ) {
                 Text(
                     text = if (progressSummary?.hasHypothesis == true) {
-                        "Continue recovery"
+                        "Продолжить восстановление"
                     } else {
-                        "Begin recovery"
+                        "Начать восстановление"
                     }
                 )
             }
@@ -171,22 +171,22 @@ private fun CaseArchiveItem(
 }
 
 private fun CaseProgressSummary?.toProgressLabel(totalEvidence: Int): String {
-    if (this == null) return "Progress: 0/$totalEvidence viewed / no hypothesis"
+    if (this == null) return "Прогресс: 0/$totalEvidence просмотрено / гипотеза не начата"
 
     val hypothesisStatus = if (hasHypothesis) {
-        "$selectedEvidenceCount evidence selected"
+        "$selectedEvidenceCount улик выбрано"
     } else {
-        "no hypothesis"
+        "гипотеза не начата"
     }
 
-    return "Progress: $viewedEvidenceCount/$totalEvidence viewed / $hypothesisStatus"
+    return "Прогресс: $viewedEvidenceCount/$totalEvidence просмотрено / $hypothesisStatus"
 }
 
 private val CaseStatus.label: String
     get() = when (this) {
-        CaseStatus.AVAILABLE -> "Available"
-        CaseStatus.IN_PROGRESS -> "In progress"
-        CaseStatus.SOLVED -> "Solved"
+        CaseStatus.AVAILABLE -> "Доступно"
+        CaseStatus.IN_PROGRESS -> "В процессе"
+        CaseStatus.SOLVED -> "Закрыто"
     }
 
 @Preview(showBackground = true)

@@ -13,31 +13,31 @@ class CheckHypothesisUseCase {
 
         val checks = listOf(
             HypothesisCheckItem(
-                title = "Victim",
+                title = "Жертва",
                 isCorrect = hypothesis.victimId == solution.victimId
             ),
             HypothesisCheckItem(
-                title = "Suspect",
+                title = "Причастный",
                 isCorrect = hypothesis.suspectId == solution.suspectId
             ),
             HypothesisCheckItem(
-                title = "Location",
+                title = "Место",
                 isCorrect = hypothesis.locationId == solution.locationId
             ),
             HypothesisCheckItem(
-                title = "Time range",
+                title = "Время",
                 isCorrect = hypothesis.timeRange == solution.timeRange
             ),
             HypothesisCheckItem(
-                title = "Cause",
+                title = "Причина",
                 isCorrect = hypothesis.cause == solution.cause
             ),
             HypothesisCheckItem(
-                title = "Method",
+                title = "Способ",
                 isCorrect = hypothesis.method == solution.method
             ),
             HypothesisCheckItem(
-                title = "Required evidence",
+                title = "Обязательные улики",
                 isCorrect = missingEvidenceIds.isEmpty()
             )
         )
