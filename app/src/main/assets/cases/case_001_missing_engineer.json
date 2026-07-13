@@ -11,17 +11,39 @@
       "description": "Responsible for diagnostics of Sector C power systems.",
       "knownFacts": [
         "His badge was last recorded at the entrance to Sector C.",
-        "He requested a manual inspection of the maintenance airlock one day before the incident."
+        "He requested a manual inspection of the maintenance airlock one day before the incident.",
+        "His suit transmitter stopped responding at 08:17."
       ]
     },
     {
       "id": "daniil_orlov",
       "name": "Daniil Orlov",
       "role": "Systems technician",
-      "description": "Had access to power routing and door logging systems.",
+      "description": "Had access to power routing, door logging, and local maintenance overrides.",
       "knownFacts": [
         "Worked the morning maintenance shift.",
-        "His access record contains a two-minute gap during the incident."
+        "His access record contains a two-minute gap during the incident.",
+        "He filed a report blaming a corrupted camera buffer before the security team requested one."
+      ]
+    },
+    {
+      "id": "mira_sokolova",
+      "name": "Mira Sokolova",
+      "role": "Security officer",
+      "description": "Monitored restricted-sector access during the station anomaly.",
+      "knownFacts": [
+        "Reported the Sector C door conflict after the incident.",
+        "Was recorded in the central corridor at 08:13."
+      ]
+    },
+    {
+      "id": "kora_ai",
+      "name": "KORA",
+      "role": "Station AI",
+      "description": "Damaged station intelligence responsible for reconstructing memory fragments.",
+      "knownFacts": [
+        "Memory sectors around 08:15 are partially corrupted.",
+        "Still retained low-level maintenance telemetry after the main log service restarted."
       ]
     }
   ],
@@ -30,31 +52,63 @@
       "id": "central_corridor",
       "name": "Central Corridor",
       "description": "Main connection route between crew and technical sectors.",
-      "connectedRoomIds": ["sector_c"]
+      "connectedRoomIds": ["sector_c", "security_post"]
     },
     {
       "id": "sector_c",
       "name": "Sector C",
       "description": "Restricted technical sector with unstable power telemetry.",
-      "connectedRoomIds": ["central_corridor", "maintenance_airlock"]
+      "connectedRoomIds": ["central_corridor", "maintenance_airlock", "power_junction"]
     },
     {
       "id": "maintenance_airlock",
       "name": "Maintenance Airlock",
       "description": "Manual service airlock connected to Sector C.",
       "connectedRoomIds": ["sector_c"]
+    },
+    {
+      "id": "power_junction",
+      "name": "Power Junction C-4",
+      "description": "Local routing node for Sector C and the maintenance airlock.",
+      "connectedRoomIds": ["sector_c"]
+    },
+    {
+      "id": "security_post",
+      "name": "Security Post",
+      "description": "Monitoring station for restricted doors and badge events.",
+      "connectedRoomIds": ["central_corridor"]
     }
   ],
   "events": [
     {
+      "id": "event_0811_orlov_override",
+      "time": "08:11",
+      "title": "Maintenance override armed",
+      "description": "A local override token is armed at Power Junction C-4 using Orlov's maintenance credentials.",
+      "locationId": "power_junction",
+      "involvedCharacterIds": ["daniil_orlov"],
+      "sourceEvidenceId": "evidence_maintenance_override",
+      "reliability": "CONFIRMED"
+    },
+    {
       "id": "event_0812_badge",
       "time": "08:12",
       "title": "Volkov badge accepted",
-      "description": "Door log reports Artem Volkov entering Sector C.",
+      "description": "Door log reports Artem Volkov entering Sector C. No exit event is found.",
       "locationId": "sector_c",
       "involvedCharacterIds": ["artem_volkov"],
       "sourceEvidenceId": "evidence_door_log_sector_c",
       "reliability": "CONFLICTING"
+    },
+    {
+      "id": "event_0813_camera",
+      "time": "08:13",
+      "title": "Camera sees Volkov in corridor",
+      "description": "A damaged camera frame appears to show Volkov outside Sector C one minute after his logged entry.",
+      "locationId": "central_corridor",
+      "involvedCharacterIds": ["artem_volkov"],
+      "sourceEvidenceId": "evidence_camera_fragment",
+      "reliability": "CORRUPTED"
     },
     {
       "id": "event_0814_power_spike",
@@ -65,28 +119,118 @@
       "involvedCharacterIds": [],
       "sourceEvidenceId": "evidence_power_log",
       "reliability": "PARTIAL"
+    },
+    {
+      "id": "event_0815_audio",
+      "time": "08:15",
+      "title": "Emergency audio fragment",
+      "description": "Volkov reports that the airlock is sealed from the service side before the channel cuts out.",
+      "locationId": "maintenance_airlock",
+      "involvedCharacterIds": ["artem_volkov"],
+      "sourceEvidenceId": "evidence_audio_fragment",
+      "reliability": "PARTIAL"
+    },
+    {
+      "id": "event_0816_log_restart",
+      "time": "08:16",
+      "title": "Door logging restarted",
+      "description": "The door logging service restarts after a 96-second outage.",
+      "locationId": "sector_c",
+      "involvedCharacterIds": ["kora_ai"],
+      "sourceEvidenceId": "evidence_kora_memory",
+      "reliability": "CONFIRMED"
+    },
+    {
+      "id": "event_0817_suit_failure",
+      "time": "08:17",
+      "title": "Suit transmitter lost",
+      "description": "Volkov's suit transmitter fails after a pressure drop inside the maintenance airlock.",
+      "locationId": "maintenance_airlock",
+      "involvedCharacterIds": ["artem_volkov"],
+      "sourceEvidenceId": "evidence_medical_report",
+      "reliability": "CONFIRMED"
     }
   ],
   "evidence": [
     {
       "id": "evidence_door_log_sector_c",
       "title": "Sector C door log",
-      "content": "08:12 - Badge accepted: Artem Volkov. Entry recorded. No exit event found.",
+      "content": "08:12 - Badge accepted: Artem Volkov. Entry recorded. No exit event found. 08:16 - Door logging service restored after watchdog restart. The missing interval overlaps with the power anomaly.",
       "sourceType": "DOOR_LOG",
-      "relatedCharacterIds": ["artem_volkov"],
+      "relatedCharacterIds": ["artem_volkov", "kora_ai"],
       "relatedRoomIds": ["sector_c"],
-      "relatedEventIds": ["event_0812_badge"],
+      "relatedEventIds": ["event_0812_badge", "event_0816_log_restart"],
       "reliability": "CONFLICTING"
+    },
+    {
+      "id": "evidence_camera_fragment",
+      "title": "Damaged corridor camera",
+      "content": "Frame C-13 shows a figure tagged as Artem Volkov in the central corridor at 08:13. The biometric confidence is 41%. Security officer Mira Sokolova is visible in the same corridor feed, but her position does not match the tagged figure. The camera timestamp has a checksum warning.",
+      "sourceType": "CAMERA_RECORDING",
+      "relatedCharacterIds": ["artem_volkov", "mira_sokolova"],
+      "relatedRoomIds": ["central_corridor"],
+      "relatedEventIds": ["event_0813_camera"],
+      "reliability": "CORRUPTED"
     },
     {
       "id": "evidence_power_log",
       "title": "Power routing anomaly",
-      "content": "08:14 - Localized spike near maintenance airlock. Door logging service restarted at 08:16.",
+      "content": "08:14 - Localized spike near maintenance airlock. 08:14:22 - Power Junction C-4 routes auxiliary load to manual airlock seals. 08:16 - Door logging service restarted. The energy pattern matches manual seal engagement, not an accidental sector failure.",
       "sourceType": "SYSTEM_LOG",
       "relatedCharacterIds": [],
-      "relatedRoomIds": ["maintenance_airlock"],
-      "relatedEventIds": ["event_0814_power_spike"],
+      "relatedRoomIds": ["maintenance_airlock", "power_junction"],
+      "relatedEventIds": ["event_0814_power_spike", "event_0816_log_restart"],
       "reliability": "PARTIAL"
+    },
+    {
+      "id": "evidence_maintenance_override",
+      "title": "Maintenance override token",
+      "content": "08:11 - Local override token armed at Power Junction C-4. Credential hash resolves to Daniil Orlov. 08:14 - Token used to lock maintenance airlock manual controls. 08:16 - Token revoked after log service restart.",
+      "sourceType": "ACCESS_LOG",
+      "relatedCharacterIds": ["daniil_orlov"],
+      "relatedRoomIds": ["power_junction", "maintenance_airlock"],
+      "relatedEventIds": ["event_0811_orlov_override", "event_0814_power_spike", "event_0816_log_restart"],
+      "reliability": "CONFIRMED"
+    },
+    {
+      "id": "evidence_audio_fragment",
+      "title": "Emergency channel fragment",
+      "content": "08:15:03 - Volkov: 'The inner seal just locked. I did not authorize this.' 08:15:09 - Unknown voice, low volume: 'You should have left the routing alone.' 08:15:12 - Volkov: 'Orlov, open the service panel.' Signal cuts out after a pressure alarm.",
+      "sourceType": "AUDIO_TRANSCRIPT",
+      "relatedCharacterIds": ["artem_volkov", "daniil_orlov"],
+      "relatedRoomIds": ["maintenance_airlock"],
+      "relatedEventIds": ["event_0815_audio"],
+      "reliability": "PARTIAL"
+    },
+    {
+      "id": "evidence_medical_report",
+      "title": "Suit telemetry and medical report",
+      "content": "Volkov's suit recorded rapid pressure loss between 08:16:44 and 08:17:10. Injury pattern is consistent with airlock decompression, not electrical trauma. Final transmitter ping originated from the maintenance airlock, not Sector C main floor.",
+      "sourceType": "MEDICAL_REPORT",
+      "relatedCharacterIds": ["artem_volkov"],
+      "relatedRoomIds": ["maintenance_airlock"],
+      "relatedEventIds": ["event_0817_suit_failure"],
+      "reliability": "CONFIRMED"
+    },
+    {
+      "id": "evidence_security_note",
+      "title": "Security officer note",
+      "content": "Mira Sokolova reported the door/camera conflict at 08:24. Her note says the corridor camera was already throwing checksum warnings before she reviewed it. She recommends checking low-level maintenance telemetry instead of the camera tag.",
+      "sourceType": "AI_MEMORY_FRAGMENT",
+      "relatedCharacterIds": ["mira_sokolova", "kora_ai"],
+      "relatedRoomIds": ["security_post", "central_corridor"],
+      "relatedEventIds": ["event_0813_camera"],
+      "reliability": "PARTIAL"
+    },
+    {
+      "id": "evidence_kora_memory",
+      "title": "KORA memory fragment",
+      "content": "Recovered memory fragment: 'Primary door log offline for 96 seconds. Low-level maintenance bus intact. Manual seal command originated from Power Junction C-4. Operator identity: D. Orlov. Confidence: 87%.'",
+      "sourceType": "AI_MEMORY_FRAGMENT",
+      "relatedCharacterIds": ["daniil_orlov", "kora_ai"],
+      "relatedRoomIds": ["power_junction", "maintenance_airlock"],
+      "relatedEventIds": ["event_0811_orlov_override", "event_0816_log_restart"],
+      "reliability": "CONFIRMED"
     }
   ],
   "solution": {
@@ -97,8 +241,11 @@
     "cause": "Covering up sabotage",
     "method": "Manual airlock lockout and logging interruption",
     "requiredEvidenceIds": [
-      "evidence_door_log_sector_c",
-      "evidence_power_log"
+      "evidence_power_log",
+      "evidence_maintenance_override",
+      "evidence_audio_fragment",
+      "evidence_medical_report",
+      "evidence_kora_memory"
     ]
   }
 }
