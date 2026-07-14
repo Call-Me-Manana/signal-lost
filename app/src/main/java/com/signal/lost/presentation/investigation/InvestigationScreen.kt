@@ -409,18 +409,6 @@ private fun HypothesisPanel(
     onEvidenceToggled: (String) -> Unit,
     onCheckHypothesis: () -> Unit
 ) {
-    val timeOptions = listOf("08:12-08:14", "08:14-08:17", "08:18-08:21")
-    val causeOptions = listOf(
-        "Случайный отказ питания",
-        "Сокрытие саботажа",
-        "Ошибка датчика"
-    )
-    val methodOptions = listOf(
-        "Ручная блокировка шлюза и прерывание журналирования",
-        "Удаленное отравление через жизнеобеспечение",
-        "Только подделка доступа по пропуску"
-    )
-
     LazyColumn(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -480,7 +468,7 @@ private fun HypothesisPanel(
         item {
             TextChoiceSection(
                 title = "Время",
-                options = timeOptions,
+                options = investigationCase.hypothesisOptions.timeRanges,
                 selectedOption = uiState.timeRange,
                 onSelected = onTimeRangeSelected
             )
@@ -489,7 +477,7 @@ private fun HypothesisPanel(
         item {
             TextChoiceSection(
                 title = "Причина",
-                options = causeOptions,
+                options = investigationCase.hypothesisOptions.causes,
                 selectedOption = uiState.cause,
                 onSelected = onCauseSelected
             )
@@ -498,7 +486,7 @@ private fun HypothesisPanel(
         item {
             TextChoiceSection(
                 title = "Способ",
-                options = methodOptions,
+                options = investigationCase.hypothesisOptions.methods,
                 selectedOption = uiState.method,
                 onSelected = onMethodSelected
             )

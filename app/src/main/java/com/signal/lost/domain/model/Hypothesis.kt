@@ -24,3 +24,10 @@ data class CaseSolution(
     val method: String,
     val requiredEvidenceIds: List<String>
 )
+
+@Serializable
+data class HypothesisOptions(
+    val timeRanges: List<String>,
+    val causes: List<String>,
+    val methods: List<String>
+)

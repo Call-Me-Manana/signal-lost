@@ -12,6 +12,7 @@ data class InvestigationCase(
     val rooms: List<Room>,
     val events: List<TimelineEvent>,
     val evidence: List<Evidence>,
+    val hypothesisOptions: HypothesisOptions,
     val solution: CaseSolution
 )
 
