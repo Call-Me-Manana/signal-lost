@@ -1,5 +1,7 @@
 package com.signal.lost.presentation.investigation
 
+import android.graphics.Paint
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,8 +19,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,6 +32,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -41,6 +49,9 @@ import com.signal.lost.domain.model.InvestigationCase
 import com.signal.lost.domain.model.Room
 import com.signal.lost.domain.model.TimelineEvent
 import com.signal.lost.domain.usecase.HypothesisCheckResult
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun InvestigationScreen(
@@ -51,7 +62,7 @@ fun InvestigationScreen(
     val uiState = viewModel.uiState
     var selectedTabIndex by remember { mutableIntStateOf(0) }
     var selectedEvidenceId by remember { mutableStateOf<String?>(null) }
-    val tabs = listOf("Улики", "Таймлайн", "Экипаж", "Гипотеза")
+    val tabs = listOf("Улики", "Таймлайн", "Карта", "Экипаж", "Гипотеза")
 
     LaunchedEffect(investigationCase.id) {
         viewModel.loadProgress(investigationCase.id)
@@ -70,7 +81,7 @@ fun InvestigationScreen(
             onBack = onBack
         )
 
-        TabRow(selectedTabIndex = selectedTabIndex) {
+        ScrollableTabRow(selectedTabIndex = selectedTabIndex) {
             tabs.forEachIndexed { index, title ->
                 Tab(
                     selected = selectedTabIndex == index,
@@ -100,12 +111,18 @@ fun InvestigationScreen(
                 events = investigationCase.events
             )
 
-            2 -> CharacterList(
+            2 -> StationMap(
+                modifier = Modifier.weight(1f),
+                rooms = investigationCase.rooms,
+                events = investigationCase.events
+            )
+
+            3 -> CharacterList(
                 modifier = Modifier.weight(1f),
                 characters = investigationCase.characters
             )
 
-            3 -> HypothesisPanel(
+            4 -> HypothesisPanel(
                 modifier = Modifier.weight(1f),
                 investigationCase = investigationCase,
                 uiState = uiState,
@@ -351,6 +368,178 @@ private fun TimelineList(
                     style = MaterialTheme.typography.bodySmall
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun StationMap(
+    modifier: Modifier = Modifier,
+    rooms: List<Room>,
+    events: List<TimelineEvent>
+) {
+    val roomNameById = rooms.associate { room -> room.id to room.name }
+    val eventsByRoomId = events
+        .filter { event -> event.locationId != null }
+        .groupBy { event -> event.locationId.orEmpty() }
+
+    LazyColumn(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            InvestigationCard {
+                Text(
+                    text = "КАРТА СТАНЦИИ",
+                    color = Color(0xFF8BE9FD),
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "Помещения и переходы восстановлены из описания дела. Используйте карту, чтобы сопоставлять маршруты, события и улики.",
+                    color = Color(0xFFA7B6BE),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        item {
+            InvestigationCard {
+                StationGraph(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(280.dp),
+                    rooms = rooms,
+                    eventRoomIds = events.mapNotNull { event -> event.locationId }.toSet()
+                )
+            }
+        }
+
+        items(rooms) { room ->
+            val connectedRooms = room.connectedRoomIds
+                .mapNotNull { connectedRoomId -> roomNameById[connectedRoomId] }
+            val roomEvents = eventsByRoomId[room.id].orEmpty()
+
+            InvestigationCard {
+                Text(
+                    text = room.name,
+                    color = Color(0xFFE6F7FF),
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = room.description,
+                    color = Color(0xFFA7B6BE),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                Text(
+                    text = "Переходы: ${connectedRooms.joinToString().ifBlank { "нет данных" }}",
+                    color = Color(0xFF8BE9FD),
+                    fontFamily = FontFamily.Monospace,
+                    style = MaterialTheme.typography.bodySmall
+                )
+
+                if (roomEvents.isNotEmpty()) {
+                    Text(
+                        text = "События:",
+                        color = Color(0xFFE6F7FF),
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    roomEvents.forEach { event ->
+                        Text(
+                            text = "${event.time} - ${event.title}",
+                            color = Color(0xFFB8D8E0),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StationGraph(
+    modifier: Modifier = Modifier,
+    rooms: List<Room>,
+    eventRoomIds: Set<String>
+) {
+    val nodeColor = Color(0xFF8BE9FD)
+    val selectedNodeColor = Color(0xFFE6F7FF)
+    val lineColor = Color(0xFF3C5963)
+    val labelColor = Color(0xFFE6F7FF)
+    val roomById = rooms.associateBy { room -> room.id }
+
+    Canvas(modifier = modifier) {
+        if (rooms.isEmpty()) return@Canvas
+
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val radius = minOf(size.width, size.height) * 0.34f
+        val nodeRadius = 18.dp.toPx()
+        val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = labelColor.toArgb()
+            textSize = 11.dp.toPx()
+            textAlign = Paint.Align.CENTER
+        }
+        val positions = rooms.mapIndexed { index, room ->
+            val angle = -PI / 2.0 + (2.0 * PI * index / rooms.size)
+            room.id to Offset(
+                x = center.x + (cos(angle) * radius).toFloat(),
+                y = center.y + (sin(angle) * radius).toFloat()
+            )
+        }.toMap()
+        val drawnConnections = mutableSetOf<String>()
+
+        rooms.forEach { room ->
+            val start = positions[room.id] ?: return@forEach
+
+            room.connectedRoomIds.forEach { connectedRoomId ->
+                val connectionKey = listOf(room.id, connectedRoomId).sorted().joinToString("|")
+                val end = positions[connectedRoomId]
+
+                if (roomById[connectedRoomId] != null && end != null && drawnConnections.add(connectionKey)) {
+                    drawLine(
+                        color = lineColor,
+                        start = start,
+                        end = end,
+                        strokeWidth = 2.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                }
+            }
+        }
+
+        rooms.forEachIndexed { index, room ->
+            val position = positions[room.id] ?: return@forEachIndexed
+            val hasEvents = room.id in eventRoomIds
+            val fillColor = if (hasEvents) selectedNodeColor else Color(0xFF0E1A1F)
+            val outlineColor = if (hasEvents) Color(0xFFFFD166) else nodeColor
+
+            drawCircle(
+                color = fillColor,
+                radius = nodeRadius,
+                center = position
+            )
+            drawCircle(
+                color = outlineColor,
+                radius = nodeRadius,
+                center = position,
+                style = Stroke(width = 2.dp.toPx())
+            )
+            drawContext.canvas.nativeCanvas.drawText(
+                (index + 1).toString(),
+                position.x,
+                position.y + 4.dp.toPx(),
+                labelPaint
+            )
+            drawContext.canvas.nativeCanvas.drawText(
+                room.name,
+                position.x,
+                position.y + nodeRadius + 16.dp.toPx(),
+                labelPaint
+            )
         }
     }
 }
