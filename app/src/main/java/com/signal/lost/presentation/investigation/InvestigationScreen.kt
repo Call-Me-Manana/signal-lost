@@ -3,7 +3,9 @@ package com.signal.lost.presentation.investigation
 import android.graphics.Paint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -18,14 +21,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,9 +62,9 @@ fun InvestigationScreen(
 ) {
     val viewModel: InvestigationViewModel = viewModel(key = investigationCase.id)
     val uiState = viewModel.uiState
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
+    var selectedSection by remember { mutableStateOf(InvestigationSection.EVIDENCE) }
+    var isSectionPanelVisible by remember { mutableStateOf(false) }
     var selectedEvidenceId by remember { mutableStateOf<String?>(null) }
-    val tabs = listOf("Улики", "Таймлайн", "Карта", "Экипаж", "Гипотеза")
 
     LaunchedEffect(investigationCase.id) {
         viewModel.loadProgress(investigationCase.id)
@@ -81,62 +83,155 @@ fun InvestigationScreen(
             onBack = onBack
         )
 
-        ScrollableTabRow(selectedTabIndex = selectedTabIndex) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex == index,
-                    onClick = { selectedTabIndex = index },
-                    text = { Text(text = title) }
+        InvestigationSectionTopBar(
+            selectedSection = selectedSection,
+            isSectionPanelVisible = isSectionPanelVisible,
+            onTogglePanel = {
+                isSectionPanelVisible = !isSectionPanelVisible
+            }
+        )
+
+        Box(modifier = Modifier.weight(1f)) {
+            when (selectedSection) {
+                InvestigationSection.EVIDENCE -> EvidenceList(
+                    modifier = Modifier.fillMaxSize(),
+                    evidence = investigationCase.evidence,
+                    selectedEvidenceId = selectedEvidenceId,
+                    viewedEvidenceIds = uiState.viewedEvidenceIds,
+                    onEvidenceSelected = { evidenceId ->
+                        selectedEvidenceId = evidenceId
+                        viewModel.markEvidenceViewed(evidenceId)
+                    },
+                    onCloseEvidence = {
+                        selectedEvidenceId = null
+                    }
+                )
+
+                InvestigationSection.TIMELINE -> TimelineList(
+                    modifier = Modifier.fillMaxSize(),
+                    events = investigationCase.events
+                )
+
+                InvestigationSection.MAP -> StationMap(
+                    modifier = Modifier.fillMaxSize(),
+                    rooms = investigationCase.rooms,
+                    events = investigationCase.events
+                )
+
+                InvestigationSection.CREW -> CharacterList(
+                    modifier = Modifier.fillMaxSize(),
+                    characters = investigationCase.characters
+                )
+
+                InvestigationSection.HYPOTHESIS -> HypothesisPanel(
+                    modifier = Modifier.fillMaxSize(),
+                    investigationCase = investigationCase,
+                    uiState = uiState,
+                    onVictimSelected = viewModel::selectVictim,
+                    onSuspectSelected = viewModel::selectSuspect,
+                    onLocationSelected = viewModel::selectLocation,
+                    onTimeRangeSelected = viewModel::selectTimeRange,
+                    onCauseSelected = viewModel::selectCause,
+                    onMethodSelected = viewModel::selectMethod,
+                    onEvidenceToggled = viewModel::toggleEvidence,
+                    onCheckHypothesis = {
+                        viewModel.checkHypothesis(investigationCase)
+                    }
+                )
+            }
+
+            if (isSectionPanelVisible) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0x99000000))
+                        .clickable {
+                            isSectionPanelVisible = false
+                        }
+                )
+                InvestigationSectionSelector(
+                    selectedSection = selectedSection,
+                    onSectionSelected = { section ->
+                        selectedSection = section
+                        isSectionPanelVisible = false
+                    }
                 )
             }
         }
+    }
+}
 
-        when (selectedTabIndex) {
-            0 -> EvidenceList(
-                modifier = Modifier.weight(1f),
-                evidence = investigationCase.evidence,
-                selectedEvidenceId = selectedEvidenceId,
-                viewedEvidenceIds = uiState.viewedEvidenceIds,
-                onEvidenceSelected = { evidenceId ->
-                    selectedEvidenceId = evidenceId
-                    viewModel.markEvidenceViewed(evidenceId)
-                },
-                onCloseEvidence = {
-                    selectedEvidenceId = null
-                }
+@Composable
+private fun InvestigationSectionTopBar(
+    selectedSection: InvestigationSection,
+    isSectionPanelVisible: Boolean,
+    onTogglePanel: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = onTogglePanel) {
+            Text(
+                text = if (isSectionPanelVisible) "×" else "☰",
+                color = Color(0xFF8BE9FD),
+                fontFamily = FontFamily.Monospace,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge
             )
+        }
+        Text(
+            text = selectedSection.label,
+            color = Color(0xFFE6F7FF),
+            fontFamily = FontFamily.Monospace,
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.titleMedium
+        )
+    }
+}
 
-            1 -> TimelineList(
-                modifier = Modifier.weight(1f),
-                events = investigationCase.events
+@Composable
+private fun InvestigationSectionSelector(
+    selectedSection: InvestigationSection,
+    onSectionSelected: (InvestigationSection) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .width(132.dp)
+            .background(Color(0xFF0E1A1F))
+            .padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        InvestigationSection.entries.forEach { section ->
+            SectionButton(
+                section = section,
+                isSelected = section == selectedSection,
+                onSectionSelected = onSectionSelected
             )
+        }
+    }
+}
 
-            2 -> StationMap(
-                modifier = Modifier.weight(1f),
-                rooms = investigationCase.rooms,
-                events = investigationCase.events
-            )
-
-            3 -> CharacterList(
-                modifier = Modifier.weight(1f),
-                characters = investigationCase.characters
-            )
-
-            4 -> HypothesisPanel(
-                modifier = Modifier.weight(1f),
-                investigationCase = investigationCase,
-                uiState = uiState,
-                onVictimSelected = viewModel::selectVictim,
-                onSuspectSelected = viewModel::selectSuspect,
-                onLocationSelected = viewModel::selectLocation,
-                onTimeRangeSelected = viewModel::selectTimeRange,
-                onCauseSelected = viewModel::selectCause,
-                onMethodSelected = viewModel::selectMethod,
-                onEvidenceToggled = viewModel::toggleEvidence,
-                onCheckHypothesis = {
-                    viewModel.checkHypothesis(investigationCase)
-                }
-            )
+@Composable
+private fun SectionButton(
+    section: InvestigationSection,
+    isSelected: Boolean,
+    onSectionSelected: (InvestigationSection) -> Unit
+) {
+    if (isSelected) {
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { onSectionSelected(section) }
+        ) {
+            Text(text = section.label)
+        }
+    } else {
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = { onSectionSelected(section) }
+        ) {
+            Text(text = section.label)
         }
     }
 }
@@ -176,6 +271,16 @@ private fun InvestigationHeader(
             Text(text = "Назад")
         }
     }
+}
+
+private enum class InvestigationSection(
+    val label: String
+) {
+    EVIDENCE("Улики"),
+    TIMELINE("Таймлайн"),
+    MAP("Карта"),
+    CREW("Экипаж"),
+    HYPOTHESIS("Гипотеза")
 }
 
 @Composable

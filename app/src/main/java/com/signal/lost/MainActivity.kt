@@ -3,7 +3,9 @@ package com.signal.lost
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.signal.lost.domain.model.InvestigationCase
 import com.signal.lost.presentation.cases.CaseArchiveScreen
@@ -24,8 +27,17 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             SignalLostTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    SignalLostApp()
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = Color(0xFF071013)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .systemBarsPadding()
+                    ) {
+                        SignalLostApp()
+                    }
                 }
             }
         }
